@@ -1,0 +1,360 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.App {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.loading,
+.no-account {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+    padding: 2rem;
+}
+
+.loading h2,
+.no-account h2 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.loading p,
+.no-account p {
+    margin-bottom: 2rem;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.connect-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.connect-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.account-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.account-address {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.nav-tab {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: 500;
+}
+
+.nav-tab:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-tab.active {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.main-content {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    width: 100%;
+}
+
+.section-title {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: #2c3e50;
+    text-align: center;
+}
+
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.item-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #e1e8ed;
+}
+
+.item-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.item-card.sold {
+    opacity: 0.7;
+    background: #f8f9fa;
+}
+
+.item-name {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.item-description {
+    color: #666;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.item-price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #27ae60;
+    margin-bottom: 1rem;
+}
+
+.item-seller {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1rem;
+    font-family: monospace;
+}
+
+.item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.buy-button {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex: 1;
+}
+
+.buy-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+}
+
+.buy-button:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.sold-badge {
+    background: #e74c3c;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-input,
+.form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.submit-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    width: 100%;
+}
+
+.submit-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.submit-button:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.error-message {
+    background: #fee;
+    color: #c33;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #fcc;
+}
+
+.success-message {
+    background: #efe;
+    color: #363;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #cfc;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.empty-state h3 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .nav-tabs {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+
+    .items-grid {
+        grid-template-columns: 1fr;
+    }
+}
