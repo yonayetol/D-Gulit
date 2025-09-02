@@ -31,9 +31,38 @@ cd ..
 
 REM Create .env file if it doesn't exist
 if not exist .env (
-    echo 📝 Creating .env file...
-    copy env.example .env
-    echo ⚠️  Please edit .env file with your configuration
+    echo 📝 Creating .env file for local development...
+    (
+        echo # ===========================================
+        echo # LOCAL DEVELOPMENT CONFIGURATION
+        echo # ===========================================
+        echo # For local development, these settings work out of the box
+        echo # No sensitive information needed!
+        echo.
+        echo # Local Hardhat network configuration
+        echo HARDHAT_NETWORK_URL=http://localhost:8545
+        echo HARDHAT_CHAIN_ID=1337
+        echo.
+        echo # Frontend configuration for local development
+        echo REACT_APP_NETWORK_ID=1337
+        echo REACT_APP_NETWORK_NAME=localhost
+        echo.
+        echo # ===========================================
+        echo # TESTNET DEPLOYMENT (OPTIONAL^)
+        echo # ===========================================
+        echo # WARNING: Never commit your private key to version control!
+        echo # Only uncomment and fill these if you want to deploy to Sepolia testnet
+        echo.
+        echo # Sepolia testnet configuration (OPTIONAL^)
+        echo # SEPOLIA_URL=https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID
+        echo # PRIVATE_KEY=your_private_key_here
+        echo.
+        echo # Testnet frontend configuration (OPTIONAL^)
+        echo # REACT_APP_NETWORK_ID=11155111
+        echo # REACT_APP_NETWORK_NAME=sepolia
+    ) > .env
+    echo ✅ .env file created with local development settings
+    echo ℹ️  No sensitive information needed for local development!
 )
 
 REM Compile contracts
@@ -43,10 +72,10 @@ npm run compile
 echo ✅ Setup complete!
 echo.
 echo 🎉 Next steps:
-echo 1. Edit .env file with your configuration (optional for local development)
-echo 2. Start local Hardhat network: npx hardhat node
-echo 3. Deploy contracts: npm run deploy
-echo 4. Start frontend: npm start
+echo 1. Start local Hardhat network: npx hardhat node
+echo 2. Deploy contracts: npm run deploy
+echo 3. Start frontend: npm start
+echo 4. Open http://localhost:3000 and connect MetaMask
 echo.
 echo 📚 For more information, see README.md
 pause

@@ -5,11 +5,13 @@ function ListItem({ contract, account }) {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
+
         price: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [file, setFile] = useState(null);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -50,9 +52,32 @@ function ListItem({ contract, account }) {
 
             const priceInWei = ethers.parseEther(formData.price);
 
+            // If a local file is provided, upload to local upload server
+            let finalImageUrl = '';
+            if (file) {
+                try {
+                    const form = new FormData();
+                    form.append('file', file);
+                    const resp = await fetch('http://localhost:4000/upload', {
+                        method: 'POST',
+                        body: form
+                    });
+                    if (!resp.ok) {
+                        console.warn('Local upload failed with status', resp.status);
+                    } else {
+                        const data = await resp.json();
+                        finalImageUrl = data.url || '';
+                    }
+                } catch (e) {
+                    console.warn('Local upload unreachable, proceeding without image');
+                    finalImageUrl = '';
+                }
+            }
+
             const tx = await contract.listItem(
                 formData.name.trim(),
                 formData.description.trim(),
+                finalImageUrl,
                 priceInWei
             );
 
@@ -60,12 +85,14 @@ function ListItem({ contract, account }) {
 
             setSuccess('Item listed successfully!');
             setFormData({ name: '', description: '', price: '' });
+            setFile(null);
         } catch (err) {
             console.error('Error listing item:', err);
-            if (err.message.includes('user rejected')) {
+            const msg = (err && err.message) ? err.message : 'Unknown error';
+            if (msg.toLowerCase().includes('user rejected')) {
                 setError('Transaction was cancelled.');
             } else {
-                setError('Failed to list item. Please try again.');
+                setError(`Failed to list item: ${msg}`);
             }
         } finally {
             setLoading(false);
@@ -119,6 +146,21 @@ function ListItem({ contract, account }) {
                             placeholder="Describe your item in detail. What makes it special? What will buyers get?"
                             required
                         />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">
+                            Image (optional)
+                        </label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+                            className="form-input"
+                        />
+                        <small style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.5rem', display: 'block' }}>
+                            If selected, the image will be stored locally by the upload server and displayed in the marketplace.
+                        </small>
                     </div>
 
                     <div className="form-group">

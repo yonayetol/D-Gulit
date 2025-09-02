@@ -26,9 +26,38 @@ cd frontend && npm install && cd ..
 
 # Create .env file if it doesn't exist
 if [ ! -f .env ]; then
-    echo "📝 Creating .env file..."
-    cp env.example .env
-    echo "⚠️  Please edit .env file with your configuration"
+    echo "📝 Creating .env file for local development..."
+    cat > .env << 'EOF'
+# ===========================================
+# LOCAL DEVELOPMENT CONFIGURATION
+# ===========================================
+# For local development, these settings work out of the box
+# No sensitive information needed!
+
+# Local Hardhat network configuration
+HARDHAT_NETWORK_URL=http://localhost:8545
+HARDHAT_CHAIN_ID=1337
+
+# Frontend configuration for local development
+REACT_APP_NETWORK_ID=1337
+REACT_APP_NETWORK_NAME=localhost
+
+# ===========================================
+# TESTNET DEPLOYMENT (OPTIONAL)
+# ===========================================
+# WARNING: Never commit your private key to version control!
+# Only uncomment and fill these if you want to deploy to Sepolia testnet
+
+# Sepolia testnet configuration (OPTIONAL)
+# SEPOLIA_URL=https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID
+# PRIVATE_KEY=your_private_key_here
+
+# Testnet frontend configuration (OPTIONAL)
+# REACT_APP_NETWORK_ID=11155111
+# REACT_APP_NETWORK_NAME=sepolia
+EOF
+    echo "✅ .env file created with local development settings"
+    echo "ℹ️  No sensitive information needed for local development!"
 fi
 
 # Compile contracts
@@ -38,9 +67,9 @@ npm run compile
 echo "✅ Setup complete!"
 echo ""
 echo "🎉 Next steps:"
-echo "1. Edit .env file with your configuration (optional for local development)"
-echo "2. Start local Hardhat network: npx hardhat node"
-echo "3. Deploy contracts: npm run deploy"
-echo "4. Start frontend: npm start"
+echo "1. Start local Hardhat network: npx hardhat node"
+echo "2. Deploy contracts: npm run deploy"
+echo "3. Start frontend: npm start"
+echo "4. Open http://localhost:3000 and connect MetaMask"
 echo ""
 echo "📚 For more information, see README.md"

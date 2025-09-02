@@ -6,6 +6,7 @@ contract Marketplace {
         uint256 id;
         string name;
         string description;
+        string imageUrl;
         uint256 price;
         address seller;
         address buyer;
@@ -55,17 +56,20 @@ contract Marketplace {
     function listItem(
         string memory _name,
         string memory _description,
+        string memory _imageUrl,
         uint256 _price
     ) public returns (uint256) {
         require(_price > 0, "Price must be greater than 0");
         require(bytes(_name).length > 0, "Name cannot be empty");
         require(bytes(_description).length > 0, "Description cannot be empty");
+        // imageUrl is optional; allow empty string when seller doesn't provide an image
 
         itemCount++;
         items[itemCount] = Item({
             id: itemCount,
             name: _name,
             description: _description,
+            imageUrl: _imageUrl,
             price: _price,
             seller: msg.sender,
             buyer: address(0),
@@ -111,6 +115,7 @@ contract Marketplace {
             uint256 id,
             string memory name,
             string memory description,
+            string memory imageUrl,
             uint256 price,
             address seller,
             address buyer,
@@ -122,6 +127,7 @@ contract Marketplace {
             item.id,
             item.name,
             item.description,
+            item.imageUrl,
             item.price,
             item.seller,
             item.buyer,

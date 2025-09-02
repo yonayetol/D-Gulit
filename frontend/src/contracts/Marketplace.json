@@ -95,6 +95,11 @@
                             "type": "string"
                         },
                         {
+                            "internalType": "string",
+                            "name": "imageUrl",
+                            "type": "string"
+                        },
+                        {
                             "internalType": "uint256",
                             "name": "price",
                             "type": "uint256"
@@ -147,6 +152,11 @@
                         {
                             "internalType": "string",
                             "name": "description",
+                            "type": "string"
+                        },
+                        {
+                            "internalType": "string",
+                            "name": "imageUrl",
                             "type": "string"
                         },
                         {
@@ -209,6 +219,11 @@
                     "type": "string"
                 },
                 {
+                    "internalType": "string",
+                    "name": "imageUrl",
+                    "type": "string"
+                },
+                {
                     "internalType": "uint256",
                     "name": "price",
                     "type": "uint256"
@@ -251,6 +266,11 @@
                         {
                             "internalType": "string",
                             "name": "description",
+                            "type": "string"
+                        },
+                        {
+                            "internalType": "string",
+                            "name": "imageUrl",
                             "type": "string"
                         },
                         {
@@ -306,6 +326,11 @@
                         {
                             "internalType": "string",
                             "name": "description",
+                            "type": "string"
+                        },
+                        {
+                            "internalType": "string",
+                            "name": "imageUrl",
                             "type": "string"
                         },
                         {
@@ -419,6 +444,11 @@
                 {
                     "internalType": "string",
                     "name": "_description",
+                    "type": "string"
+                },
+                {
+                    "internalType": "string",
+                    "name": "_imageUrl",
                     "type": "string"
                 },
                 {

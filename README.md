@@ -53,17 +53,38 @@ A decentralized marketplace built on Ethereum where users can list and purchase 
    npm run install:frontend
    ```
 
-3. **Set up environment variables**
+3. **Environment setup (Automatic)**
    ```bash
-   # Copy the example environment file
-   cp env.example .env
-   
-   # Edit .env with your values (for testnet deployment)
-   # SEPOLIA_URL=https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID
-   # PRIVATE_KEY=your_private_key_here
+   # The setup script automatically creates a .env file with local development settings
+   # No manual configuration needed for local development!
+   # 
+   # The .env file contains safe local settings:
+   # - HARDHAT_NETWORK_URL=http://localhost:8545
+   # - HARDHAT_CHAIN_ID=1337
+   # - REACT_APP_NETWORK_ID=1337
+   # - REACT_APP_NETWORK_NAME=localhost
    ```
 
 ## Development
+
+### 🚀 Quick Start (Local Development)
+
+**For the easiest setup, see [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for a complete guide.**
+
+Quick commands:
+```bash
+# 1. Setup everything
+npm run install:all
+
+# 2. Start local blockchain
+npx hardhat node
+
+# 3. Deploy contracts (in new terminal)
+npm run deploy
+
+# 4. Start frontend (in new terminal)
+npm start
+```
 
 ### Smart Contract Development
 
@@ -86,7 +107,7 @@ A decentralized marketplace built on Ethereum where users can list and purchase 
    npm run deploy
    ```
 
-4. **Deploy to Sepolia testnet**
+4. **Deploy to Sepolia testnet** (Optional)
    ```bash
    npm run deploy:sepolia
    ```
@@ -100,7 +121,7 @@ A decentralized marketplace built on Ethereum where users can list and purchase 
 
 2. **Open your browser**
    - Navigate to `http://localhost:3000`
-   - Make sure MetaMask is installed and connected
+   - Make sure MetaMask is installed and connected to localhost:8545
 
 ## Usage
 
@@ -163,11 +184,13 @@ Tests cover:
 
 ## Deployment
 
-### Local Development
+### Local Development (No .env needed!)
 
 1. Start Hardhat network: `npx hardhat node`
 2. Deploy contracts: `npm run deploy`
 3. Start frontend: `npm start`
+
+**That's it!** No environment variables needed for local development.
 
 ### Testnet Deployment
 

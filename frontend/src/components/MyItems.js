@@ -20,6 +20,7 @@ function MyItems({ contract, account }) {
                 id: item.id.toString(),
                 name: item.name,
                 description: item.description,
+                imageUrl: item.imageUrl,
                 price: ethers.formatEther(item.price),
                 seller: item.seller,
                 buyer: item.buyer,
@@ -33,6 +34,7 @@ function MyItems({ contract, account }) {
                 id: item.id.toString(),
                 name: item.name,
                 description: item.description,
+                imageUrl: item.imageUrl,
                 price: ethers.formatEther(item.price),
                 seller: item.seller,
                 buyer: item.buyer,
@@ -55,6 +57,16 @@ function MyItems({ contract, account }) {
 
     const renderItemCard = (item, isPurchased = false) => (
         <div key={item.id} className="item-card">
+            <div className="item-image-container">
+                <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="item-image"
+                    onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                    }}
+                />
+            </div>
             <h3 className="item-name">{item.name}</h3>
             <p className="item-description">{item.description}</p>
             <div className="item-price">{item.price} ETH</div>

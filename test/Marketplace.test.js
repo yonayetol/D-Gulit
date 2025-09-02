@@ -6,6 +6,7 @@ describe("Marketplace", function () {
     let owner, seller, buyer;
     let itemName = "Premium Study Notes";
     let itemDescription = "Comprehensive notes for blockchain development";
+    let itemImageUrl = "https://example.com/image.jpg";
     let itemPrice = ethers.parseEther("0.1"); // 0.1 ETH
 
     beforeEach(async function () {
@@ -28,13 +29,14 @@ describe("Marketplace", function () {
 
     describe("Listing Items", function () {
         it("Should allow users to list items", async function () {
-            await expect(marketplace.connect(seller).listItem(itemName, itemDescription, itemPrice))
+            await expect(marketplace.connect(seller).listItem(itemName, itemDescription, itemImageUrl, itemPrice))
                 .to.emit(marketplace, "ItemListed")
                 .withArgs(1, itemName, itemPrice, seller.address);
 
             const item = await marketplace.getItem(1);
             expect(item.name).to.equal(itemName);
             expect(item.description).to.equal(itemDescription);
+            expect(item.imageUrl).to.equal(itemImageUrl);
             expect(item.price).to.equal(itemPrice);
             expect(item.seller).to.equal(seller.address);
             expect(item.isSold).to.be.false;
@@ -42,26 +44,32 @@ describe("Marketplace", function () {
 
         it("Should reject listing with zero price", async function () {
             await expect(
-                marketplace.connect(seller).listItem(itemName, itemDescription, 0)
+                marketplace.connect(seller).listItem(itemName, itemDescription, itemImageUrl, 0)
             ).to.be.revertedWith("Price must be greater than 0");
         });
 
         it("Should reject listing with empty name", async function () {
             await expect(
-                marketplace.connect(seller).listItem("", itemDescription, itemPrice)
+                marketplace.connect(seller).listItem("", itemDescription, itemImageUrl, itemPrice)
             ).to.be.revertedWith("Name cannot be empty");
         });
 
         it("Should reject listing with empty description", async function () {
             await expect(
-                marketplace.connect(seller).listItem(itemName, "", itemPrice)
+                marketplace.connect(seller).listItem(itemName, "", itemImageUrl, itemPrice)
             ).to.be.revertedWith("Description cannot be empty");
+        });
+
+        it("Should reject listing with empty image URL", async function () {
+            await expect(
+                marketplace.connect(seller).listItem(itemName, itemDescription, "", itemPrice)
+            ).to.be.revertedWith("Image URL cannot be empty");
         });
     });
 
     describe("Purchasing Items", function () {
         beforeEach(async function () {
-            await marketplace.connect(seller).listItem(itemName, itemDescription, itemPrice);
+            await marketplace.connect(seller).listItem(itemName, itemDescription, itemImageUrl, itemPrice);
         });
 
         it("Should allow users to purchase items", async function () {
@@ -108,9 +116,9 @@ describe("Marketplace", function () {
     describe("View Functions", function () {
         beforeEach(async function () {
             // List multiple items
-            await marketplace.connect(seller).listItem("Item 1", "Description 1", ethers.parseEther("0.1"));
-            await marketplace.connect(buyer).listItem("Item 2", "Description 2", ethers.parseEther("0.2"));
-            await marketplace.connect(seller).listItem("Item 3", "Description 3", ethers.parseEther("0.3"));
+            await marketplace.connect(seller).listItem("Item 1", "Description 1", "https://example.com/image1.jpg", ethers.parseEther("0.1"));
+            await marketplace.connect(buyer).listItem("Item 2", "Description 2", "https://example.com/image2.jpg", ethers.parseEther("0.2"));
+            await marketplace.connect(seller).listItem("Item 3", "Description 3", "https://example.com/image3.jpg", ethers.parseEther("0.3"));
         });
 
         it("Should return all items", async function () {
