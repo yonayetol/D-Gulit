@@ -52,21 +52,23 @@ function ListItem({ contract, account }) {
 
             const priceInWei = ethers.parseEther(formData.price);
 
-            // If a local file is provided, upload to local upload server
+            // If a local file is provided, upload and rename as Post{id}.ext using the server
             let finalImageUrl = '';
+            // let nextIdForTxt = undefined; // Removed unused variable
             if (file) {
                 try {
                     const form = new FormData();
                     form.append('file', file);
-                    const resp = await fetch('http://localhost:4000/upload', {
+                    const resp = await fetch('http://localhost:4000/upload-post', {
                         method: 'POST',
                         body: form
                     });
-                    if (!resp.ok) {
-                        console.warn('Local upload failed with status', resp.status);
-                    } else {
+                    if (resp.ok) {
                         const data = await resp.json();
                         finalImageUrl = data.url || '';
+                        // nextIdForTxt = data.id; // Removed unused variable
+                    } else {
+                        console.warn('Local upload failed with status', resp.status);
                     }
                 } catch (e) {
                     console.warn('Local upload unreachable, proceeding without image');
@@ -82,6 +84,25 @@ function ListItem({ contract, account }) {
             );
 
             await tx.wait();
+
+            // Persist a local copy of the listing for fast reads/fallback rendering
+            try {
+                // JSON store
+                await fetch('http://localhost:4000/posts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: formData.name.trim(),
+                        description: formData.description.trim(),
+                        imageUrl: finalImageUrl,
+                        price: formData.price,
+                        seller: account || ''
+                    })
+                });
+                // No direct txt write to avoid duplicates; server regenerates txt from JSON
+            } catch (e) {
+                console.warn('Saving local post failed (non-blocking)');
+            }
 
             setSuccess('Item listed successfully!');
             setFormData({ name: '', description: '', price: '' });
@@ -198,13 +219,13 @@ function ListItem({ contract, account }) {
                 </form>
             </div>
 
-            <div style={{ marginTop: '2rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
-                <h3 style={{ marginBottom: '1rem', color: '#2c3e50' }}>💡 Tips for Successful Listings:</h3>
-                <ul style={{ color: '#666', lineHeight: '1.6' }}>
+            <div className="tips-panel">
+                <h3 className="tips-title">💡 Tips for Successful Listings</h3>
+                <ul className="tips-list">
                     <li><strong>Be descriptive:</strong> Explain what makes your item unique and valuable</li>
                     <li><strong>Set fair prices:</strong> Research similar items and price competitively</li>
                     <li><strong>Highlight exclusivity:</strong> Mention if it's limited edition or one-of-a-kind</li>
-                    <li><strong>Examples of popular items:</strong> Study materials, digital art, exclusive content, access codes</li>
+                    <li><strong>Examples:</strong> Study materials, digital art, exclusive content, access codes</li>
                 </ul>
             </div>
         </div>

@@ -5,13 +5,15 @@ import Header from './components/Header';
 import Marketplace from './components/Marketplace';
 import ListItem from './components/ListItem';
 import MyItems from './components/MyItems';
+import OwnerDashboard from './components/OwnerDashboard';
 
 function App() {
     const [account, setAccount] = useState('');
     const [contract, setContract] = useState(null);
-    const [provider, setProvider] = useState(null);
+    // const [provider, setProvider] = useState(null); // Removed unused variable
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('marketplace');
+    const [isOwner, setIsOwner] = useState(false);
 
     const loadBlockchainData = async () => {
         if (typeof window.ethereum !== 'undefined') {
@@ -25,7 +27,7 @@ function App() {
 
                 // Get provider
                 const provider = new ethers.BrowserProvider(window.ethereum);
-                setProvider(provider);
+                // setProvider(provider); // Removed unused setter
 
                 // Get signer
                 const signer = await provider.getSigner();
@@ -37,6 +39,15 @@ function App() {
                 if (contractAddress.address) {
                     const contract = new ethers.Contract(contractAddress.address, contractABI, signer);
                     setContract(contract);
+
+                    // Check if current account is the owner
+                    try {
+                        const owner = await contract.owner();
+                        setIsOwner(owner.toLowerCase() === accounts[0].toLowerCase());
+                    } catch (error) {
+                        console.error('Error checking owner:', error);
+                        setIsOwner(false);
+                    }
                 }
 
                 setLoading(false);
@@ -52,6 +63,53 @@ function App() {
 
     useEffect(() => {
         loadBlockchainData();
+    }, []);
+
+    // React to MetaMask account / chain changes
+    useEffect(() => {
+        if (!window.ethereum) return;
+
+        const handleAccountsChanged = async (accs) => {
+            const next = accs?.[0] || '';
+            setAccount(next);
+            try {
+                const nextProvider = new ethers.BrowserProvider(window.ethereum);
+                // setProvider(nextProvider); // Removed unused setter
+                const signer = await nextProvider.getSigner();
+                const contractAddress = require('./contracts/contract-address.json');
+                const contractABI = require('./contracts/Marketplace.json').abi;
+                if (contractAddress.address) {
+                    const newContract = new ethers.Contract(contractAddress.address, contractABI, signer);
+                    setContract(newContract);
+
+                    // Check if current account is the owner
+                    try {
+                        const owner = await newContract.owner();
+                        setIsOwner(owner.toLowerCase() === next.toLowerCase());
+                    } catch (error) {
+                        console.error('Error checking owner:', error);
+                        setIsOwner(false);
+                    }
+                } else {
+                    setContract(null);
+                    setIsOwner(false);
+                }
+            } catch (e) {
+                console.error('Account change reinit failed:', e);
+            }
+        };
+
+        const handleChainChanged = () => {
+            window.location.reload();
+        };
+
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        window.ethereum.on('chainChanged', handleChainChanged);
+
+        return () => {
+            window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+            window.ethereum.removeListener('chainChanged', handleChainChanged);
+        };
     }, []);
 
     if (loading) {
@@ -82,6 +140,7 @@ function App() {
                 contract={contract}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
+                isOwner={isOwner}
             />
 
             <main className="main-content">
@@ -93,6 +152,9 @@ function App() {
                 )}
                 {activeTab === 'my-items' && (
                     <MyItems contract={contract} account={account} />
+                )}
+                {activeTab === 'owner' && isOwner && (
+                    <OwnerDashboard contract={contract} account={account} />
                 )}
             </main>
         </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Header({ account, contract, activeTab, setActiveTab }) {
+function Header({ account, contract, activeTab, setActiveTab, isOwner }) {
     const formatAddress = (address) => {
         if (!address) return '';
         return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -39,6 +39,14 @@ function Header({ account, contract, activeTab, setActiveTab }) {
                 >
                     📦 My Items
                 </button>
+                {isOwner && (
+                    <button
+                        className={`nav-tab ${activeTab === 'owner' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('owner')}
+                    >
+                        🏛️ Owner Dashboard
+                    </button>
+                )}
             </div>
         </header>
     );

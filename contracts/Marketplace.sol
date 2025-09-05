@@ -14,8 +14,19 @@ contract Marketplace {
         bool exists;
     }
 
+    struct PendingPurchase {
+        uint256 itemId;
+        address buyer;
+        address seller;
+        uint256 price;
+        uint256 timestamp;
+        bool exists;
+    }
+
     mapping(uint256 => Item) public items;
+    mapping(uint256 => PendingPurchase) public pendingPurchases;
     uint256 public itemCount;
+    uint256 public pendingPurchaseCount;
     address public owner;
 
     event ItemListed(
@@ -25,12 +36,29 @@ contract Marketplace {
         address indexed seller
     );
 
-    event ItemPurchased(
+    event PurchaseRequested(
         uint256 indexed itemId,
         string name,
         uint256 price,
         address indexed seller,
-        address indexed buyer
+        address indexed buyer,
+        uint256 pendingPurchaseId
+    );
+
+    event PurchaseApproved(
+        uint256 indexed itemId,
+        string name,
+        uint256 price,
+        address indexed seller,
+        address indexed buyer,
+        uint256 pendingPurchaseId
+    );
+
+    event PurchaseRejected(
+        uint256 indexed itemId,
+        address indexed seller,
+        address indexed buyer,
+        uint256 pendingPurchaseId
     );
 
     modifier onlyOwner() {
@@ -48,9 +76,15 @@ contract Marketplace {
         _;
     }
 
+    modifier pendingPurchaseExists(uint256 _pendingPurchaseId) {
+        require(pendingPurchases[_pendingPurchaseId].exists, "Pending purchase does not exist");
+        _;
+    }
+
     constructor() {
         owner = msg.sender;
         itemCount = 0;
+        pendingPurchaseCount = 0;
     }
 
     function listItem(
@@ -59,6 +93,7 @@ contract Marketplace {
         string memory _imageUrl,
         uint256 _price
     ) public returns (uint256) {
+        
         require(_price > 0, "Price must be greater than 0");
         require(bytes(_name).length > 0, "Name cannot be empty");
         require(bytes(_description).length > 0, "Description cannot be empty");
@@ -91,12 +126,18 @@ contract Marketplace {
         require(msg.value >= item.price, "Insufficient payment");
         require(msg.sender != item.seller, "Seller cannot buy their own item");
 
-        item.buyer = msg.sender;
-        item.isSold = true;
+        // Create pending purchase
+        pendingPurchaseCount++;
+        pendingPurchases[pendingPurchaseCount] = PendingPurchase({
+            itemId: _itemId,
+            buyer: msg.sender,
+            seller: item.seller,
+            price: item.price,
+            timestamp: block.timestamp,
+            exists: true
+        });
 
-        // Transfer ETH to seller
-        (bool success, ) = payable(item.seller).call{value: item.price}("");
-        require(success, "Transfer to seller failed");
+        // ETH stays in contract (escrow) - no transfer needed
 
         // Refund excess payment
         if (msg.value > item.price) {
@@ -104,7 +145,60 @@ contract Marketplace {
             require(refundSuccess, "Refund failed");
         }
 
-        emit ItemPurchased(_itemId, item.name, item.price, item.seller, msg.sender);
+        emit PurchaseRequested(_itemId, item.name, item.price, item.seller, msg.sender, pendingPurchaseCount);
+    }
+
+    function approvePurchase(uint256 _pendingPurchaseId) 
+        public 
+        onlyOwner 
+        pendingPurchaseExists(_pendingPurchaseId) 
+    {
+        PendingPurchase storage pendingPurchase = pendingPurchases[_pendingPurchaseId];
+        Item storage item = items[pendingPurchase.itemId];
+        
+        require(!item.isSold, "Item is already sold");
+
+        // Mark item as sold
+        item.buyer = pendingPurchase.buyer;
+        item.isSold = true;
+
+        // Transfer ETH from contract to seller
+        (bool success, ) = payable(pendingPurchase.seller).call{value: pendingPurchase.price}("");
+        require(success, "Transfer to seller failed");
+
+        // Remove pending purchase
+        delete pendingPurchases[_pendingPurchaseId];
+
+        emit PurchaseApproved(
+            pendingPurchase.itemId, 
+            item.name, 
+            pendingPurchase.price, 
+            pendingPurchase.seller, 
+            pendingPurchase.buyer, 
+            _pendingPurchaseId
+        );
+    }
+
+    function rejectPurchase(uint256 _pendingPurchaseId) 
+        public 
+        onlyOwner 
+        pendingPurchaseExists(_pendingPurchaseId) 
+    {
+        PendingPurchase storage pendingPurchase = pendingPurchases[_pendingPurchaseId];
+        
+        // Refund ETH from contract to buyer
+        (bool success, ) = payable(pendingPurchase.buyer).call{value: pendingPurchase.price}("");
+        require(success, "Refund to buyer failed");
+
+        // Remove pending purchase
+        delete pendingPurchases[_pendingPurchaseId];
+
+        emit PurchaseRejected(
+            pendingPurchase.itemId, 
+            pendingPurchase.seller, 
+            pendingPurchase.buyer, 
+            _pendingPurchaseId
+        );
     }
 
     function getItem(uint256 _itemId) 
@@ -215,5 +309,65 @@ contract Marketplace {
         }
         
         return purchasedItems;
+    }
+
+    function getPendingPurchase(uint256 _pendingPurchaseId) 
+        public 
+        view 
+        pendingPurchaseExists(_pendingPurchaseId) 
+        returns (
+            uint256 itemId,
+            address buyer,
+            address seller,
+            uint256 price,
+            uint256 timestamp
+        ) 
+    {
+        PendingPurchase memory pendingPurchase = pendingPurchases[_pendingPurchaseId];
+        return (
+            pendingPurchase.itemId,
+            pendingPurchase.buyer,
+            pendingPurchase.seller,
+            pendingPurchase.price,
+            pendingPurchase.timestamp
+        );
+    }
+
+    function getAllPendingPurchases() public view returns (PendingPurchase[] memory) {
+        PendingPurchase[] memory allPending = new PendingPurchase[](pendingPurchaseCount);
+        uint256 index = 0;
+        
+        for (uint256 i = 1; i <= pendingPurchaseCount; i++) {
+            if (pendingPurchases[i].exists) {
+                allPending[index] = pendingPurchases[i];
+                index++;
+            }
+        }
+        
+        return allPending;
+    }
+
+    function getPendingPurchasesForItem(uint256 _itemId) public view returns (PendingPurchase[] memory) {
+        uint256 count = 0;
+        
+        // Count pending purchases for this item
+        for (uint256 i = 1; i <= pendingPurchaseCount; i++) {
+            if (pendingPurchases[i].exists && pendingPurchases[i].itemId == _itemId) {
+                count++;
+            }
+        }
+
+        PendingPurchase[] memory itemPending = new PendingPurchase[](count);
+        uint256 index = 0;
+        
+        // Populate pending purchases for this item
+        for (uint256 i = 1; i <= pendingPurchaseCount; i++) {
+            if (pendingPurchases[i].exists && pendingPurchases[i].itemId == _itemId) {
+                itemPending[index] = pendingPurchases[i];
+                index++;
+            }
+        }
+        
+        return itemPending;
     }
 }

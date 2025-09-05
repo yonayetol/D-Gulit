@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 
 function MyItems({ contract, account }) {
@@ -8,40 +8,92 @@ function MyItems({ contract, account }) {
     const [activeTab, setActiveTab] = useState('listed');
     const [error, setError] = useState('');
 
-    const loadMyItems = async () => {
-        if (!contract) return;
-
+    const loadMyItems = useCallback(async () => {
         try {
             setLoading(true);
 
-            // Load listed items
-            const listed = await contract.getMyListedItems();
-            const formattedListed = listed.map(item => ({
-                id: item.id.toString(),
-                name: item.name,
-                description: item.description,
-                imageUrl: item.imageUrl,
-                price: ethers.formatEther(item.price),
-                seller: item.seller,
-                buyer: item.buyer,
-                isSold: item.isSold
-            }));
+            // On-chain listed items
+            let formattedListed = [];
+            let formattedPurchased = [];
+            if (contract) {
+                try {
+                    const listed = await contract.getMyListedItems();
+                    formattedListed = listed.map(item => ({
+                        id: item.id.toString(),
+                        name: item.name,
+                        description: item.description,
+                        imageUrl: item.imageUrl,
+                        price: ethers.formatEther(item.price),
+                        seller: item.seller,
+                        buyer: item.buyer,
+                        isSold: item.isSold
+                    }));
+                } catch (e) {
+                    console.warn('Chain listed items failed');
+                }
+                try {
+                    const purchased = await contract.getMyPurchasedItems();
+                    formattedPurchased = purchased.map(item => ({
+                        id: item.id.toString(),
+                        name: item.name,
+                        description: item.description,
+                        imageUrl: item.imageUrl,
+                        price: ethers.formatEther(item.price),
+                        seller: item.seller,
+                        buyer: item.buyer,
+                        isSold: item.isSold
+                    }));
+                } catch (e) {
+                    console.warn('Chain purchased items failed');
+                }
+            }
+
+            // Merge local posts created by this account (fallback)
+            try {
+                const resp = await fetch('http://localhost:4000/posts');
+                if (resp.ok) {
+                    const localPosts = await resp.json();
+                    const mine = (localPosts || []).filter(p => (p.seller || '').toLowerCase() === (account || '').toLowerCase());
+                    const mapped = mine.map(p => ({
+                        id: `local-${p.id}`,
+                        name: p.name,
+                        description: p.description,
+                        imageUrl: p.imageUrl || '',
+                        price: p.price || '',
+                        seller: p.seller || 'local',
+                        buyer: '',
+                        isSold: false
+                    }));
+                    formattedListed = [...mapped, ...formattedListed];
+                }
+            } catch (e) {
+                console.warn('Local posts fetch failed');
+            }
+
+            // Also consider posts.txt (just in case JSON store fails)
+            try {
+                const respTxt = await fetch('http://localhost:4000/posts-txt');
+                if (respTxt.ok) {
+                    const txtPosts = await respTxt.json();
+                    const mineTxt = (txtPosts || []).filter(p => (p.seller || '').toLowerCase() === (account || '').toLowerCase());
+                    const mappedTxt = mineTxt.map(p => ({
+                        id: `local-txt-${p.id}`,
+                        name: p.name,
+                        description: p.description,
+                        imageUrl: p.imageUrl && p.imageUrl.toLowerCase() !== 'none' ? p.imageUrl : '',
+                        price: p.price || '',
+                        seller: p.seller || 'local',
+                        buyer: '',
+                        isSold: false
+                    }));
+                    formattedListed = [...mappedTxt, ...formattedListed];
+                }
+            } catch (e) {
+                console.warn('posts.txt fetch failed');
+            }
+
             setListedItems(formattedListed);
-
-            // Load purchased items
-            const purchased = await contract.getMyPurchasedItems();
-            const formattedPurchased = purchased.map(item => ({
-                id: item.id.toString(),
-                name: item.name,
-                description: item.description,
-                imageUrl: item.imageUrl,
-                price: ethers.formatEther(item.price),
-                seller: item.seller,
-                buyer: item.buyer,
-                isSold: item.isSold
-            }));
             setPurchasedItems(formattedPurchased);
-
             setError('');
         } catch (err) {
             console.error('Error loading items:', err);
@@ -49,11 +101,11 @@ function MyItems({ contract, account }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [contract, account]);
 
     useEffect(() => {
         loadMyItems();
-    }, [contract]);
+    }, [loadMyItems]);
 
     const renderItemCard = (item, isPurchased = false) => (
         <div key={item.id} className="item-card">
@@ -134,6 +186,13 @@ function MyItems({ contract, account }) {
                 >
                     🛒 My Purchases ({purchasedItems.length})
                 </button>
+                <button
+                    className="nav-tab"
+                    onClick={loadMyItems}
+                    title="Refresh items"
+                >
+                    🔄 Refresh
+                </button>
             </div>
 
             {activeTab === 'listed' && (
@@ -168,14 +227,7 @@ function MyItems({ contract, account }) {
                 </div>
             )}
 
-            <div style={{ marginTop: '2rem', padding: '1rem', background: '#e8f4fd', borderRadius: '8px' }}>
-                <h3 style={{ marginBottom: '1rem', color: '#2c3e50' }}>ℹ️ About Your Items</h3>
-                <ul style={{ color: '#666', lineHeight: '1.6' }}>
-                    <li><strong>Listed Items:</strong> Items you've put up for sale. You'll receive ETH when someone buys them.</li>
-                    <li><strong>Purchased Items:</strong> Items you've bought from other sellers. You now own these items!</li>
-                    <li><strong>Ownership:</strong> All transactions are recorded on the blockchain for transparency and security.</li>
-                </ul>
-            </div>
+            {/* Info panel removed per request */}
         </div>
     );
 }

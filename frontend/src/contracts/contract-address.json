@@ -1,6 +1,6 @@
 {
   "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  "network": "hardhat",
+  "network": "localhost",
   "chainId": 1337,
-  "deployedAt": "2025-09-02T16:12:39.541Z"
+  "deployedAt": "2025-09-05T01:00:48.730Z"
 }
