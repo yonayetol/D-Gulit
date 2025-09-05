@@ -1,7 +1,0 @@
-1.
-     Name: Icog Logo
-     Description: best logo for icog...
-     price: 100
-     image: http://localhost:4000/uploads/Post1.png
-     seller: 0x70997970c51812dc3a010c7d01b50e0d17dc79c8
-     status: AVAILABLE

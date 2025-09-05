@@ -11,87 +11,65 @@ function MyItems({ contract, account }) {
     const loadMyItems = useCallback(async () => {
         try {
             setLoading(true);
-
-            // On-chain listed items
             let formattedListed = [];
             let formattedPurchased = [];
             if (contract) {
                 try {
                     const listed = await contract.getMyListedItems();
-                    formattedListed = listed.map(item => ({
-                        id: item.id.toString(),
-                        name: item.name,
-                        description: item.description,
-                        imageUrl: item.imageUrl,
-                        price: ethers.formatEther(item.price),
-                        seller: item.seller,
-                        buyer: item.buyer,
-                        isSold: item.isSold
+                    // Fetch metadata for each item from server if imageUrl is a metadata URL
+                    formattedListed = await Promise.all(listed.map(async item => {
+                        let meta = {};
+                        if (item.imageUrl && item.imageUrl.startsWith('http')) {
+                            try {
+                                const resp = await fetch(item.imageUrl);
+                                if (resp.ok) {
+                                    meta = await resp.json();
+                                }
+                            } catch (e) {
+                                // fallback to contract data
+                            }
+                        }
+                        return {
+                            id: item.id.toString(),
+                            name: meta.name || item.name,
+                            description: meta.description || item.description,
+                            imageUrl: meta.imageUrl || item.imageUrl,
+                            price: ethers.formatEther(item.price),
+                            seller: item.seller,
+                            buyer: item.buyer,
+                            isSold: item.isSold
+                        };
                     }));
                 } catch (e) {
                     console.warn('Chain listed items failed');
                 }
                 try {
                     const purchased = await contract.getMyPurchasedItems();
-                    formattedPurchased = purchased.map(item => ({
-                        id: item.id.toString(),
-                        name: item.name,
-                        description: item.description,
-                        imageUrl: item.imageUrl,
-                        price: ethers.formatEther(item.price),
-                        seller: item.seller,
-                        buyer: item.buyer,
-                        isSold: item.isSold
+                    formattedPurchased = await Promise.all(purchased.map(async item => {
+                        let meta = {};
+                        if (item.imageUrl && item.imageUrl.startsWith('http')) {
+                            try {
+                                const resp = await fetch(item.imageUrl);
+                                if (resp.ok) {
+                                    meta = await resp.json();
+                                }
+                            } catch (e) {}
+                        }
+                        return {
+                            id: item.id.toString(),
+                            name: meta.name || item.name,
+                            description: meta.description || item.description,
+                            imageUrl: meta.imageUrl || item.imageUrl,
+                            price: ethers.formatEther(item.price),
+                            seller: item.seller,
+                            buyer: item.buyer,
+                            isSold: item.isSold
+                        };
                     }));
                 } catch (e) {
                     console.warn('Chain purchased items failed');
                 }
             }
-
-            // Merge local posts created by this account (fallback)
-            try {
-                const resp = await fetch('http://localhost:4000/posts');
-                if (resp.ok) {
-                    const localPosts = await resp.json();
-                    const mine = (localPosts || []).filter(p => (p.seller || '').toLowerCase() === (account || '').toLowerCase());
-                    const mapped = mine.map(p => ({
-                        id: `local-${p.id}`,
-                        name: p.name,
-                        description: p.description,
-                        imageUrl: p.imageUrl || '',
-                        price: p.price || '',
-                        seller: p.seller || 'local',
-                        buyer: '',
-                        isSold: false
-                    }));
-                    formattedListed = [...mapped, ...formattedListed];
-                }
-            } catch (e) {
-                console.warn('Local posts fetch failed');
-            }
-
-            // Also consider posts.txt (just in case JSON store fails)
-            try {
-                const respTxt = await fetch('http://localhost:4000/posts-txt');
-                if (respTxt.ok) {
-                    const txtPosts = await respTxt.json();
-                    const mineTxt = (txtPosts || []).filter(p => (p.seller || '').toLowerCase() === (account || '').toLowerCase());
-                    const mappedTxt = mineTxt.map(p => ({
-                        id: `local-txt-${p.id}`,
-                        name: p.name,
-                        description: p.description,
-                        imageUrl: p.imageUrl && p.imageUrl.toLowerCase() !== 'none' ? p.imageUrl : '',
-                        price: p.price || '',
-                        seller: p.seller || 'local',
-                        buyer: '',
-                        isSold: false
-                    }));
-                    formattedListed = [...mappedTxt, ...formattedListed];
-                }
-            } catch (e) {
-                console.warn('posts.txt fetch failed');
-            }
-
             setListedItems(formattedListed);
             setPurchasedItems(formattedPurchased);
             setError('');

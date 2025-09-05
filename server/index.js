@@ -192,6 +192,37 @@ app.post('/posts/:id/purchase', (req, res) => {
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
+
+// Upload metadata JSON and return its URL
+app.post('/upload-metadata', (req, res) => {
+    const { name, description, imageUrl = '', price = '', seller = '' } = req.body || {};
+    if (!name || !description) {
+        return res.status(400).json({ error: 'name and description are required' });
+    }
+    // Save metadata as a JSON file
+    const metaDir = path.join(dataDir, 'metadata');
+    if (!fs.existsSync(metaDir)) fs.mkdirSync(metaDir, { recursive: true });
+    const posts = readPosts();
+    const nextId = posts.length > 0 ? posts[posts.length - 1].id + 1 : 1;
+    const meta = {
+        name,
+        description,
+        imageUrl,
+        price,
+        seller
+    };
+    const metaFilename = `meta_${nextId}.json`;
+    const metaPath = path.join(metaDir, metaFilename);
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    const url = `${req.protocol}://${req.get('host')}/data/metadata/${metaFilename}`;
+    res.json({ url });
+});
+
+// Serve metadata files statically
+const metaDir = path.join(dataDir, 'metadata');
+if (!fs.existsSync(metaDir)) fs.mkdirSync(metaDir, { recursive: true });
+app.use('/data/metadata', express.static(metaDir));
+
 app.listen(PORT, () => {
     console.log(`Upload server listening on http://localhost:${PORT}`);
 });

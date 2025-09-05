@@ -33,20 +33,17 @@ function OwnerDashboard({ contract, account }) {
         try {
             setLoading(true);
             setMessage('Approving purchase...');
-
-            // Check if the function exists and call it
             if (!contract.approvePurchase) {
                 throw new Error('approvePurchase function not found on contract');
             }
-
             const tx = await contract.approvePurchase(pendingPurchaseId);
             if (!tx) {
                 throw new Error('No transaction returned from approvePurchase');
             }
-
             await tx.wait();
             setMessage('Purchase approved successfully!');
-            await loadPendingPurchases(); // Refresh the list
+            // Remove the approved purchase from the UI immediately
+            setPendingPurchases(prev => prev.filter((_, idx) => idx !== (pendingPurchaseId - 1)));
         } catch (error) {
             console.error('Error approving purchase:', error);
             setMessage(`Failed to approve purchase: ${error.message}`);
@@ -67,20 +64,17 @@ function OwnerDashboard({ contract, account }) {
         try {
             setLoading(true);
             setMessage('Rejecting purchase...');
-
-            // Check if the function exists and call it
             if (!contract.rejectPurchase) {
                 throw new Error('rejectPurchase function not found on contract');
             }
-
             const tx = await contract.rejectPurchase(pendingPurchaseId);
             if (!tx) {
                 throw new Error('No transaction returned from rejectPurchase');
             }
-
             await tx.wait();
             setMessage('Purchase rejected successfully!');
-            await loadPendingPurchases(); // Refresh the list
+            // Remove the rejected purchase from the UI immediately
+            setPendingPurchases(prev => prev.filter((_, idx) => idx !== (pendingPurchaseId - 1)));
         } catch (error) {
             console.error('Error rejecting purchase:', error);
             setMessage(`Failed to reject purchase: ${error.message}`);
@@ -136,7 +130,7 @@ function OwnerDashboard({ contract, account }) {
                         {pendingPurchases.map((purchase, index) => (
                             <div key={index} className="purchase-card">
                                 <div className="purchase-header">
-                                    <h4>Purchase Request #{purchase.id}</h4>
+                                    <h4>Purchase Request #{index + 1}</h4>
                                     <span className="timestamp">
                                         {formatTimestamp(purchase.timestamp)}
                                     </span>
@@ -170,14 +164,14 @@ function OwnerDashboard({ contract, account }) {
                                 <div className="purchase-actions">
                                     <button
                                         className="approve-btn"
-                                        onClick={() => approvePurchase(purchase.id)}
+                                        onClick={() => approvePurchase(index + 1)}
                                         disabled={loading}
                                     >
                                         ✅ Approve
                                     </button>
                                     <button
                                         className="reject-btn"
-                                        onClick={() => rejectPurchase(purchase.id)}
+                                        onClick={() => rejectPurchase(index + 1)}
                                         disabled={loading}
                                     >
                                         ❌ Reject

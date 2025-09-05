@@ -1,0 +1,7 @@
+{
+  "name": "Rich Dad Poor Dad",
+  "description": "cool book",
+  "imageUrl": "http://localhost:4000/uploads/Post1.jpeg",
+  "price": "200",
+  "seller": "0x90f79bf6eb2c4f870365e785982e1f101e93b906"
+}

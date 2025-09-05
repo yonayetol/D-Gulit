@@ -52,9 +52,8 @@ function ListItem({ contract, account }) {
 
             const priceInWei = ethers.parseEther(formData.price);
 
-            // If a local file is provided, upload and rename as Post{id}.ext using the server
-            let finalImageUrl = '';
-            // let nextIdForTxt = undefined; // Removed unused variable
+            // 1. Upload image if provided
+            let imageUrl = '';
             if (file) {
                 try {
                     const form = new FormData();
@@ -65,44 +64,52 @@ function ListItem({ contract, account }) {
                     });
                     if (resp.ok) {
                         const data = await resp.json();
-                        finalImageUrl = data.url || '';
-                        // nextIdForTxt = data.id; // Removed unused variable
+                        imageUrl = data.url || '';
                     } else {
                         console.warn('Local upload failed with status', resp.status);
                     }
                 } catch (e) {
                     console.warn('Local upload unreachable, proceeding without image');
-                    finalImageUrl = '';
+                    imageUrl = '';
                 }
             }
 
-            const tx = await contract.listItem(
-                formData.name.trim(),
-                formData.description.trim(),
-                finalImageUrl,
-                priceInWei
-            );
-
-            await tx.wait();
-
-            // Persist a local copy of the listing for fast reads/fallback rendering
+            // 2. Upload metadata JSON to server and get metadata URL
+            let metadataUrl = '';
             try {
-                // JSON store
-                await fetch('http://localhost:4000/posts', {
+                const metaResp = await fetch('http://localhost:4000/upload-metadata', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name: formData.name.trim(),
                         description: formData.description.trim(),
-                        imageUrl: finalImageUrl,
+                        imageUrl: imageUrl,
                         price: formData.price,
                         seller: account || ''
                     })
                 });
-                // No direct txt write to avoid duplicates; server regenerates txt from JSON
+                if (metaResp.ok) {
+                    const metaData = await metaResp.json();
+                    metadataUrl = metaData.url || '';
+                } else {
+                    setError('Failed to upload metadata.');
+                    setLoading(false);
+                    return;
+                }
             } catch (e) {
-                console.warn('Saving local post failed (non-blocking)');
+                setError('Failed to upload metadata.');
+                setLoading(false);
+                return;
             }
+
+            // 3. Store only the metadata URL in the contract
+            const tx = await contract.listItem(
+                formData.name.trim(),
+                formData.description.trim(),
+                metadataUrl,
+                priceInWei
+            );
+            await tx.wait();
 
             setSuccess('Item listed successfully!');
             setFormData({ name: '', description: '', price: '' });
