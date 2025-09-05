@@ -12,26 +12,31 @@ function Marketplace({ contract, account }) {
             setLoading(true);
             if (!contract) {
                 setItems([]);
-                // setPendingPurchases([]); // Removed unused setter
                 return;
             }
 
             // Load available items
             const availableItems = await contract.getAvailableItems();
-
             // Load pending purchases
             const pending = await contract.getAllPendingPurchases();
-            // setPendingPurchases(pending); // Removed unused setter
 
-            const chainItems = availableItems.map(item => {
-                // Check if this item has pending purchases
+            // Fetch metadata for each item if imageUrl is a metadata URL
+            const chainItems = await Promise.all(availableItems.map(async item => {
                 const hasPendingPurchase = pending.some(p => p.itemId.toString() === item.id.toString());
-
+                let meta = {};
+                if (item.imageUrl && item.imageUrl.startsWith('http')) {
+                    try {
+                        const resp = await fetch(item.imageUrl);
+                        if (resp.ok) {
+                            meta = await resp.json();
+                        }
+                    } catch (e) {}
+                }
                 return {
                     id: item.id.toString(),
-                    name: item.name,
-                    description: item.description,
-                    imageUrl: item.imageUrl,
+                    name: meta.name || item.name,
+                    description: meta.description || item.description,
+                    imageUrl: meta.imageUrl || item.imageUrl,
                     price: ethers.formatEther(item.price),
                     seller: item.seller,
                     buyer: item.buyer,
@@ -39,7 +44,7 @@ function Marketplace({ contract, account }) {
                     hasPendingPurchase: hasPendingPurchase,
                     source: 'chain'
                 };
-            });
+            }));
             setItems(chainItems);
             setError('');
         } catch (err) {

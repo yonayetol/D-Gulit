@@ -1,7 +1,7 @@
 {
   "name": "Rich Dad Poor Dad",
-  "description": "cool book",
+  "description": "old book",
   "imageUrl": "http://localhost:4000/uploads/Post1.jpeg",
-  "price": "200",
-  "seller": "0x90f79bf6eb2c4f870365e785982e1f101e93b906"
+  "price": "12",
+  "seller": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 }

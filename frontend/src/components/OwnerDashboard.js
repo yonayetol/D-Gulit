@@ -2,6 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 
 function OwnerDashboard({ contract, account }) {
+    // Helper to delete metadata file
+    const deleteMetadata = async (purchase) => {
+        if (purchase && purchase.imageUrl && purchase.imageUrl.startsWith('http')) {
+            try {
+                const url = new URL(purchase.imageUrl);
+                // Assume metadata URL is in the same directory as imageUrl, with meta_ prefix
+                const metaUrl = url.pathname.replace(/\/uploads\/[^/]+$/, `/data/metadata/meta_${purchase.itemId}.json`);
+                await fetch(metaUrl, { method: 'DELETE' });
+            } catch {}
+        }
+    };
     const [pendingPurchases, setPendingPurchases] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -12,7 +23,9 @@ function OwnerDashboard({ contract, account }) {
         try {
             setLoading(true);
             const purchases = await contract.getAllPendingPurchases();
-            setPendingPurchases(purchases);
+            // Filter out empty/deleted entries (itemId === 0)
+            const validPurchases = purchases.filter(p => p.itemId && p.itemId !== 0);
+            setPendingPurchases(validPurchases);
         } catch (error) {
             console.error('Error loading pending purchases:', error);
             setMessage('Failed to load pending purchases');
@@ -22,6 +35,17 @@ function OwnerDashboard({ contract, account }) {
     }, [contract]);
 
     const approvePurchase = async (pendingPurchaseId) => {
+        // Helper to delete metadata file
+        const deleteMetadata = async (purchase) => {
+            if (purchase && purchase.imageUrl && purchase.imageUrl.startsWith('http')) {
+                try {
+                    const url = new URL(purchase.imageUrl);
+                    // Assume metadata URL is in the same directory as imageUrl, with meta_ prefix
+                    const metaUrl = url.pathname.replace(/\/uploads\/[^/]+$/, `/data/metadata/meta_${purchase.itemId}.json`);
+                    await fetch(metaUrl, { method: 'DELETE' });
+                } catch {}
+            }
+        };
         if (!contract) {
             setMessage('Contract not loaded. Please refresh and try again.');
             return;
@@ -43,7 +67,13 @@ function OwnerDashboard({ contract, account }) {
             await tx.wait();
             setMessage('Purchase approved successfully!');
             // Remove the approved purchase from the UI immediately
-            setPendingPurchases(prev => prev.filter((_, idx) => idx !== (pendingPurchaseId - 1)));
+            setPendingPurchases(prev => {
+                const removed = prev.filter((_, idx) => idx !== (pendingPurchaseId - 1));
+                // Delete metadata for this purchase
+                const purchase = prev[pendingPurchaseId - 1];
+                deleteMetadata(purchase);
+                return removed;
+            });
         } catch (error) {
             console.error('Error approving purchase:', error);
             setMessage(`Failed to approve purchase: ${error.message}`);
@@ -74,7 +104,13 @@ function OwnerDashboard({ contract, account }) {
             await tx.wait();
             setMessage('Purchase rejected successfully!');
             // Remove the rejected purchase from the UI immediately
-            setPendingPurchases(prev => prev.filter((_, idx) => idx !== (pendingPurchaseId - 1)));
+            setPendingPurchases(prev => {
+                const removed = prev.filter((_, idx) => idx !== (pendingPurchaseId - 1));
+                // Delete metadata for this purchase
+                const purchase = prev[pendingPurchaseId - 1];
+                deleteMetadata(purchase);
+                return removed;
+            });
         } catch (error) {
             console.error('Error rejecting purchase:', error);
             setMessage(`Failed to reject purchase: ${error.message}`);
